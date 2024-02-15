@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Заметки</title>
+    <script src="./js/vue.js"></script>
+    <link rel="stylesheet" href="./CSS/style.css">
+</head>
+
+<body>
+    <div id="app">
+        <form class="cardForm" @submit.prevent="addItem">
+            <p>
+                <label for="NoteTitle">Имя:</label>
+                <input class="titlenote" id="NoteTitle" v-model="noteTitle" required>
+            </p>
+            <p v-for="(item, index) in items" :key="index">
+                <label>{{ `Цель ${index + 1}:` }}</label>
+                <input v-model="item.text" required>
+            </p>
+            <p>
+                <button class="btn" :disabled="items.length >= 5">Добавить цель</button>
+                <button class="btn create-btn" @click="createNotes" :disabled="items.length === 0">Создать</button>
+            </p>
+        </form>
+        <div class="columns">
+            <div class="column">
+                <h2>Колонка Один
+                    <button class="btndel" @click="deleteAllCardsInColumn(1)">Delete All</button>
+                </h2>
+                <div class="card" v-for="group in firstColumn" :key="group.id">
+                    <h3>{{ group.noteTitle }}</h3>
+                    <ul>
+                        <li v-for="item in group.items" :key="item.id">
+                            <input type="checkbox" v-model="item.checked" :disabled="item.checked" :class="{ fixed: item.isFixed }" @change="updateProgress(group)"> {{ item.text }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="column">
+                <h2>Колонка Два
+                    <button class="btndel" @click="deleteAllCardsInColumn(2)">Delete All</button>
+                </h2>
+                <div class="card" v-for="group in secondColumn" :key="group.id">
+                    <h3>{{ group.noteTitle }}</h3>
+                    <ul>
+                        <li v-for="item in group.items" :key="item.id">
+                            <input type="checkbox" v-model="item.checked" :disabled="item.checked" @change="updateProgress(group)"> {{ item.text }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="column">
+                <h2>Колонка Три
+                    <button class="btndel" @click="deleteAllCardsInColumn(3)">Delete All</button>
+                </h2>
+                <div v-for="group in thirdColumn" :key="group.id">
+                    <div class="card">
+                        <h3>{{ group.noteTitle }}</h3>
+                        <ul>
+                            <li v-for="item in group.items" :key="item.id">
+                                <input type="checkbox" v-model="item.checked" :disabled="item.checked"> {{ item.text }}
+                            </li>
+                        </ul>
+                        <p v-if="group.isComplete">{{ group.lastChecked }}</p>
+                        <button class="btndel" @click="deleteNoteGroup(group.id)">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./js/main.js"></script>
+</body>
+
+</html>
