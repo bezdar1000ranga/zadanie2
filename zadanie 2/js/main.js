@@ -1,20 +1,66 @@
+const storageKey = 'notes-app';
+const storageData = localStorage.getItem(storageKey);
+
+const initialData = storageData ? JSON.parse(storageData) : {
+    firstColumn: [],
+    secondColumn: [],
+    thirdColumn: []
+};
+
 new Vue({
     el: '#app',
     data: {
         noteTitle: '',
         items: [],
-        firstColumn: [],
-        secondColumn: [],
-        thirdColumn: [],
+        firstColumn: initialData.firstColumn,
+        secondColumn: initialData.secondColumn,
+        thirdColumn: initialData.thirdColumn,
         isFirstColumnFixed: false,
+        groupName: null,
+        inputOne: null,
+        inputTwo: null,
+        inputThr: null,
+        inputFor: null,
+        inputFiv: null,
+        important: null
     },
-    mounted() {
-        if (localStorage.getItem('noteData')) {
-            const noteData = JSON.parse(localStorage.getItem('noteData'));
-            this.firstColumn = noteData.firstColumn;
-            this.secondColumn = noteData.secondColumn;
-            this.thirdColumn = noteData.thirdColumn;
+    watch: {
+        firstColumn: {
+            handler() {
+                this.saveDataToLocalStorage();
+            },
+            deep: true
+        },
+        secondColumn: {
+            handler() {
+                this.saveDataToLocalStorage();
+            },
+            deep: true
+        },
+        thirdColumn: {
+            handler() {
+                this.saveDataToLocalStorage();
+            },
+            deep: true
         }
+    },
+    computed: {
+        isDisabled() {
+            return function (groupIndex, item) {
+
+                return item.checked || this.isGroupLastItemDisabled[groupIndex] === item;
+            };
+        },
+        isGroupLastItemDisabled() {
+            return this.firstColumn.map(group => {
+                if (this.secondColumn.length >= 5 && group.items.length > 0) {
+                    const lastUncheckedItem = group.items.slice().reverse().find(item => !item.checked);
+                    return lastUncheckedItem;
+                }
+
+                return null;
+            });
+        },
     },
     methods: {
         deleteNoteGroup(groupId) {
@@ -22,122 +68,72 @@ new Vue({
             this.secondColumn = this.secondColumn.filter(group => group.id !== groupId);
             this.thirdColumn = this.thirdColumn.filter(group => group.id !== groupId);
             this.saveDataToLocalStorage();
-            this.checkDisableFirstColumn();
         },
         updateProgress(card) {
             const checkedCount = card.items.filter(item => item.checked).length;
             const progress = (checkedCount / card.items.length) * 100;
             card.isComplete = progress === 100;
-            this.checkMoveCard();
-            this.saveDataToLocalStorage();
             if (card.isComplete) {
                 card.lastChecked = new Date().toLocaleString();
             }
-
-            card.items.forEach(item => {
-                item.disabled = item.checked;
-            });
-
-            if (progress >= 50 && this.secondColumn.length >= 5) {
-                this.disableFirstColumn();
-            }
-
             this.checkMoveCard();
-            this.saveDataToLocalStorage();
         },
-        disableFirstColumn() {
-            this.isFirstColumnFixed = true;
-
-            this.firstColumn.forEach(note => {
-                note.items.forEach(item => {
-                    item.disabled = true;
-                    item.isFixed = item.checked;
-                });
-            });
-        },
-        moveFirstColumn() {
-            this.firstColumn.forEach(note => {
-                const progress = (note.items.filter(item => item.checked).length / note.items.length) * 100;
+        moveFirstColm() {
+            this.firstColumn.forEach(card => {
+                const progress = (card.items.filter(item => item.checked).length / card.items.length) * 100;
 
                 const isMaxSecondColumn = this.secondColumn.length >= 5;
 
                 if (progress >= 50 && !isMaxSecondColumn) {
-                    this.secondColumn.push(note);
-                    this.firstColumn.splice(this.firstColumn.indexOf(note), 1);
-                    this.moveSecondColumn();
+                    this.secondColumn.push(card);
+                    this.firstColumn.splice(this.firstColumn.indexOf(card), 1);
+                    this.moveSecondColm();
                 }
             });
+
         },
-        moveSecondColumn() {
-            this.secondColumn.forEach(note => {
-                const progress = (note.items.filter(item => item.checked).length / note.items.length) * 100;
+        moveSecondColm() {
+            this.secondColumn.forEach(card => {
+                const progress = (card.items.filter(item => item.checked).length / card.items.length) * 100;
                 if (progress === 100) {
-                    note.isComplete = true;
-                    note.lastChecked = new Date().toLocaleString();
-                    this.thirdColumn.push(note);
-                    this.secondColumn.splice(this.secondColumn.indexOf(note), 1);
-                    this.moveFirstColumn();
+                    card.isComplete = true;
+                    card.lastChecked = new Date().toLocaleString();
+                    this.thirdColumn.push(card);
+                    this.secondColumn.splice(this.secondColumn.indexOf(card), 1);
+                    this.moveFirstColm();
                 }
-            });
+            })
         },
         checkMoveCard() {
-            this.moveFirstColumn();
-            this.moveSecondColumn();
-            if (this.isFirstColumnFixed && this.firstColumn.length === 0) {
-                this.isFirstColumnFixed = false;
-            }
+            this.moveFirstColm();
+            this.moveSecondColm();
+            this.sortedColumns();
         },
-        checkDisableFirstColumn() {
-            if (this.secondColumn.length >= 5) {
-                const areAllSecondColumnComplete = this.secondColumn.every(note => note.isComplete);
-                this.firstColumn.forEach(note => {
-                    note.items.forEach(item => {
-                        if (areAllSecondColumnComplete) {
-                            item.disabled = true;
-                        } else {
-                            item.disabled = false;
-                        }
-                    });
-                });
-            } else if (this.isFirstColumnFixed) {
-                this.isFirstColumnFixed = false;
-                this.firstColumn.forEach(note => {
-                    note.items.forEach(item => {
-                        item.disabled = false;
-                    });
-                });
-            }
-        },
-        addItem() {
-            if (this.items.length < 5) {
-                if (this.items.some(item => item.text.trim() === '')) {
-                    return;
-                }
-
-                this.items.push({ id: Date.now(), text: '', checked: false });
-            }
-        },
-        createNotes() {
-            if (this.noteTitle && this.items.length >= 3 && this.items.length <= 5) {
-                const firstColumnCardCount = this.firstColumn.length;
-                const hasEmptyText = this.items.some(item => item.text.trim() === '');
-
-                if (firstColumnCardCount < 3 && !hasEmptyText) {
-                    const newNoteGroup = {
+        createNotes(){
+                const inputs = [this.inputOne, this.inputTwo, this.inputThr, this.inputFor, this.inputFiv];
+                const validInputs = inputs.filter(input => input !== null && input.trim() !== '');
+                const numItems = Math.max(3, Math.min(5, validInputs.length));
+    
+                if (this.groupName && this.important) {
+                    const newGroup = {
                         id: Date.now(),
-                        noteTitle: this.noteTitle,
-                        items: this.items,
-                        isComplete: false,
-                        lastChecked: null
-                    };
-
-                    this.firstColumn.push(newNoteGroup);
-                    this.saveDataToLocalStorage();
+                        groupName: this.groupName,
+                        items: validInputs.slice(0, numItems).map(text => ({ text, checked: false })),
+                        important: this.important,
+                    }
+                    if (this.firstColumn.length < 3) {
+                        this.firstColumn.push(newGroup)
+                        this.sortedColumns();
+                        this.saveDataToLocalStorage();
+                    }
                 }
-
-                this.noteTitle = '';
-                this.items = [];
-            }
+                this.groupName = null,
+                this.inputOne = null,
+                this.inputTwo = null,
+                this.inputThr = null,
+                this.inputFor = null,
+                this.inputFiv = null,
+                this.important = null
         },
         deleteAllCardsInColumn(columnIndex) {
             switch (columnIndex) {
@@ -154,15 +150,19 @@ new Vue({
                     break;
             }
             this.saveDataToLocalStorage();
-            this.checkDisableFirstColumn();
+        },
+        sortedColumns(){
+            this.firstColumn.sort((a, b) => b.important - a.important);  
+            this.secondColumn.sort((a, b) => b.important - a.important); 
+            this.thirdColumn.sort((a, b) => b.important - a.important); 
         },
         saveDataToLocalStorage() {
-            const noteData = {
+            const data = {
                 firstColumn: this.firstColumn,
                 secondColumn: this.secondColumn,
                 thirdColumn: this.thirdColumn
             };
-            localStorage.setItem('noteData', JSON.stringify(noteData));
+            localStorage.setItem(storageKey, JSON.stringify(data));
         },
     }
 });

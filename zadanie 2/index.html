@@ -9,18 +9,40 @@
 
 <body>
     <div id="app">
-        <form class="cardForm" @submit.prevent="addItem">
+        <form class="cardForm" @submit.prevent="createNotes">
             <p>
-                <label for="NoteTitle">Имя:</label>
-                <input class="titlenote" id="NoteTitle" v-model="noteTitle" required>
-            </p>
-            <p v-for="(item, index) in items" :key="index">
-                <label>{{ `Цель ${index + 1}:` }}</label>
-                <input v-model="item.text" required>
+                <label for="GroupName">GroupName:</label>
+                <input id="GroupName" v-model="groupName" placeholder="Group Name">
             </p>
             <p>
-                <button class="btn" :disabled="items.length >= 5">Добавить цель</button>
-                <button class="btn create-btn" @click="createNotes" :disabled="items.length === 0">Создать</button>
+                <label for="InputOne">Todo:</label>
+                <input id="InputOne" v-model="inputOne" placeholder="InputOne">
+            </p>
+            <p>
+                <label for="InputTwo">Todo:</label>
+                <input id="InputTwo" v-model="inputTwo" placeholder="InputTwo">
+            </p>
+            <p>
+                <label for="InputThr">Todo:</label>
+                <input id="InputThr" v-model="inputThr" placeholder="InputThr">
+            </p>
+            <p>
+                <label for="InputFor">Todo:</label>
+                <input id="InputFor" v-model="inputFor" placeholder="InputFor">
+            </p>
+            <p>
+                <label for="InputFiv">Todo:</label>
+                <input id="InputFiv" v-model="inputFiv" placeholder="InputFiv">
+            </p>
+            <p>
+                <select v-model.number="important" name="important" id="important">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                </select>
+            </p>
+            <p>
+                <input type="submit" value="Submit">
             </p>
         </form>
         <div class="columns">
@@ -28,11 +50,11 @@
                 <h2>Колонка Один
                     <button class="btndel" @click="deleteAllCardsInColumn(1)">Delete All</button>
                 </h2>
-                <div class="card" v-for="group in firstColumn" :key="group.id">
-                    <h3>{{ group.noteTitle }}</h3>
+                <div class="card" v-for="(group, groupIndex) in firstColumn" :key="group.id">
+                    <h3>{{ group.groupName }} - {{group.important}}</h3>
                     <ul>
-                        <li v-for="item in group.items" :key="item.id">
-                            <input type="checkbox" v-model="item.checked" :disabled="item.checked" :class="{ fixed: item.isFixed }" @change="updateProgress(group)"> {{ item.text }}
+                        <li v-for="(item, itemIndex) in group.items" :key="item.id">
+                            <input type="checkbox" v-model="item.checked" :disabled="isDisabled(groupIndex, item)" :class="{ fixed: item.isFixed }" @change="updateProgress(group)"> {{ item.text }}
                         </li>
                     </ul>
                 </div>
@@ -41,8 +63,8 @@
                 <h2>Колонка Два
                     <button class="btndel" @click="deleteAllCardsInColumn(2)">Delete All</button>
                 </h2>
-                <div class="card" v-for="group in secondColumn" :key="group.id">
-                    <h3>{{ group.noteTitle }}</h3>
+                <div class="card" v-for="(group, groupIndex) in secondColumn" :key="group.id">
+                    <h3>{{ group.groupName }} - {{group.important}}</h3>
                     <ul>
                         <li v-for="item in group.items" :key="item.id">
                             <input type="checkbox" v-model="item.checked" :disabled="item.checked" @change="updateProgress(group)"> {{ item.text }}
@@ -56,7 +78,7 @@
                 </h2>
                 <div v-for="group in thirdColumn" :key="group.id">
                     <div class="card">
-                        <h3>{{ group.noteTitle }}</h3>
+                        <h3>{{ group.groupName }} - {{group.important}}</h3>
                         <ul>
                             <li v-for="item in group.items" :key="item.id">
                                 <input type="checkbox" v-model="item.checked" :disabled="item.checked"> {{ item.text }}
