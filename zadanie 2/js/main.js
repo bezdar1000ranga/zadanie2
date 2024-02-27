@@ -152,9 +152,9 @@ new Vue({
             this.saveDataToLocalStorage();
         },
         sortedColumns(){
-            this.firstColumn.sort((a, b) => b.important - a.important);  
-            this.secondColumn.sort((a, b) => b.important - a.important); 
-            this.thirdColumn.sort((a, b) => b.important - a.important); 
+            this.firstColumn.sort((a, b) => a.important - b.important);  
+            this.secondColumn.sort((a, b) => a.important - b.important); 
+            this.thirdColumn.sort((a, b) => a.important - b.important); 
         },
         saveDataToLocalStorage() {
             const data = {
